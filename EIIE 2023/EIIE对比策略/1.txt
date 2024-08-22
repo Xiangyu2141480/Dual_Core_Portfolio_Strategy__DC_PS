@@ -1,0 +1,34 @@
+Evaluator：训练所有样本,输出在训练集和回测集中的正收益的天数
+
+Critic： 对于原来在critic中采用修改的二阶函数（混合相减）
+optimal_reward, b_2 = self.reward_calculation(state, optimal_portfolio_vector)
+optimal_variance = self.modified_value(state, optimal_portfolio_vector)
+optimal_objective_reward = optimal_reward - optimal_variance
+objective_reward = -(optimal_objective_reward - (reward - modified_variance))**2
+
+Actor: 对于输出Q值的网络采进进行修改（transformer之后的全连接层）
+并对于全连接层中的激活函数进行修改
+self.Q_activation = nn.Sequential(nn.PReLU())
+self.fc1_1 = nn.Sequential(nn.Linear(action_dim, action_dim * 128), nn.LogSigmoid(),nn.Linear(action_dim * 128, action_dim))
+Q值不再乘以方差协方差矩阵，而是乘以几个资产的方差
+Variande_Matrix = torch.triu(torch.tril(Convariance_matrix, diagonal=0))
+Q_predict = torch.bmm(Variande_Matrix, Q[:, :].unsqueeze(2))
+
+直接输出末端不采用激活函数
+Q = self.fc1_1(out_transofromer)
+# Q = self.Q_activation(Q)
+Q_predict = self.covariance_calculation_with_Q_based_value(state_2, Q)
+
+
+将训练步骤调整为400万步
+回测及保持不变，训练集修改为：
+TRAIN_START_DATE = '2010-06-15'
+TRAIN_END_DATE =  '2020-08-01'
+batch size: 1024
+回测
+TEST_START_DATE = '2020-06-15'
+TEST_END_DATE = '2021-03-01'
+
+修改手续费率：
+buy_cost_pct=5e-4,
+sell_cost_pct=5e-4
